@@ -13,64 +13,108 @@ btnAddPost.addEventListener('click', addNewPost);
 
 // ---------- EVENT ENTRY POINTS ----------
 function showAllPosts() {
-    getPosts(renderAllPosts);
+    // getPosts(renderAllPosts);
+    const request = http();
+    request.get('https://jsonplaceholder.typicode.com/posts', renderAllPosts);
 }
 
 
 function addNewPost() {
+    const request = http();
     const newPost = {
         title: 'mister alesha',
         body: 'ololo',
         userId: 155
     };
-    addPost(newPost, (response) => {
-        renderOnePost(response);
-    })
+    const headers = {
+        'Content-type': 'application/json; charset=UTF-8',
+    };
+
+    request.post('https://jsonplaceholder.typicode.com/posts', newPost, headers, renderOnePost);
+
 }
 // -------------------------------------------------------------------------------------------------------------------
 
 
 // ---------- AJAX ----------
-function getPosts(cb) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts');
-    xhr.addEventListener('load', () => {
-        const response = JSON.parse(xhr.responseText);
-        cb(response);
-    });
-    xhr.addEventListener('error', () => {
-        console.log('ERROR');
-    });
+function http() {
+    return {
+        get(url, cb) {
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.addEventListener('load', () => {
+                    if (Math.floor(xhr.status / 100) !== 2) {
+                        cb(`Error! Status code: ${xhr.status}`, xhr);
+                        return;
+                    }
 
-    xhr.send();
+                    const response = JSON.parse(xhr.responseText);
+                    cb(null, response);
+                });
+                xhr.addEventListener('error', () => {
+                    cb(`Error! Status code: ${xhr.status}`, xhr);
+                });
+
+                xhr.send();
+            }
+            catch (error) {
+                cb(error);
+            }
+        },
+        post(url, body, headers, cb) {
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url);
+                if (headers) {
+                    Object.entries(headers).forEach(([key, value]) => {
+                        xhr.setRequestHeader(key, value);
+                    });
+                }
+
+                xhr.addEventListener('load', () => {
+                    if (Math.floor(xhr.status / 100) !== 2) {
+                        cb(`Error! Status code: ${xhr.status}`, xhr);
+                        return;
+                    }
+
+                    const response = JSON.parse(xhr.responseText);
+                    cb(null, response);
+                });
+                xhr.addEventListener('error', () => {
+                    cb(`Error! Status code: ${xhr.status}`, xhr);
+                });
+
+                xhr.send(JSON.stringify(body));
+            }
+            catch (error) {
+                cb(error);
+            }
+        }
+
+    };
 }
 
-
-function addPost(body, cb) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://jsonplaceholder.typicode.com/posts');
-    xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8');
-    xhr.addEventListener('load', () => {
-        const response = JSON.parse(xhr.responseText);
-        cb(response);
-    });
-    xhr.addEventListener('error', () => {
-        console.log('ERROR');
-    });
-
-    xhr.send(JSON.stringify(body));
-}
 // -------------------------------------------------------------------------------------------------------------------
 
 
 // ---------- RENDER ----------
-function renderOnePost(post) {
+function renderOnePost(error, post) {
+    if (error) {
+        console.log(error);
+        return;
+    }
     const newPost = cardTemplate(post);
     container.insertAdjacentElement("afterbegin", newPost);
 }
 
 
-function renderAllPosts(posts) {
+function renderAllPosts(error, posts) {
+    if (error) {
+        console.log(error);
+        return;
+    }
+
     const fragment = document.createDocumentFragment();
     posts.forEach(post => {
         fragment.appendChild(cardTemplate(post))
