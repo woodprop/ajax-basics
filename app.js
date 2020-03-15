@@ -1,19 +1,33 @@
-
-
 // ---------- ELEMENTS ----------
 const container = document.querySelector('.container');
 const btnGetPosts = document.querySelector('.btn-get-posts');
-
-
+const btnAddPost = document.querySelector('.btn-add-post');
+// -------------------------------------------------------------------------------------------------------------------
 
 
 // ---------- EVENTS ----------
 btnGetPosts.addEventListener('click', showAllPosts);
+btnAddPost.addEventListener('click', addNewPost);
+// -------------------------------------------------------------------------------------------------------------------
 
 
+// ---------- EVENT ENTRY POINTS ----------
+function showAllPosts() {
+    getPosts(renderAllPosts);
+}
 
 
-
+function addNewPost() {
+    const newPost = {
+        title: 'mister alesha',
+        body: 'ololo',
+        userId: 155
+    };
+    addPost(newPost, (response) => {
+        renderOnePost(response);
+    })
+}
+// -------------------------------------------------------------------------------------------------------------------
 
 
 // ---------- AJAX ----------
@@ -32,14 +46,28 @@ function getPosts(cb) {
 }
 
 
+function addPost(body, cb) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://jsonplaceholder.typicode.com/posts');
+    xhr.setRequestHeader('Content-type', 'application/json; charset=UTF-8');
+    xhr.addEventListener('load', () => {
+        const response = JSON.parse(xhr.responseText);
+        cb(response);
+    });
+    xhr.addEventListener('error', () => {
+        console.log('ERROR');
+    });
 
-
-
-
-function showAllPosts() {
-    getPosts(renderAllPosts);
+    xhr.send(JSON.stringify(body));
 }
+// -------------------------------------------------------------------------------------------------------------------
 
+
+// ---------- RENDER ----------
+function renderOnePost(post) {
+    const newPost = cardTemplate(post);
+    container.insertAdjacentElement("afterbegin", newPost);
+}
 
 
 function renderAllPosts(posts) {
@@ -50,8 +78,9 @@ function renderAllPosts(posts) {
 
     container.appendChild(fragment);
 }
+// -------------------------------------------------------------------------------------------------------------------
 
-
+// ---------- MAKEUP TEMPLATES ----------
 function cardTemplate(post) {
     const card = document.createElement('div');
     card.classList.add('card', 'mb-2');
